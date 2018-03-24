@@ -5,6 +5,7 @@ import clearcl.imagej.ClearCLIJ;
 import clearcl.imagej.demo.BenchmarkingDemo;
 import clearcl.util.ElapsedTime;
 import de.mpicbg.spimcat.spotdetection.math.Arrays;
+import de.mpicbg.spimcat.spotdetection.tools.GPUSum;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -15,9 +16,9 @@ import java.util.HashMap;
 public class GPUSpotDetection {
     public static void main (String... args) throws IOException {
 
-        float samplingFactorX = 0.25f;
-        float samplingFactorY = 0.25f;
-        float samplingFactorZ = 1;
+        float samplingFactorX = 0.5f;
+        float samplingFactorY = 0.5f;
+        float samplingFactorZ = 2;
 
         new ImageJ();
         ClearCLIJ clij = new ClearCLIJ("HD");
@@ -56,6 +57,8 @@ public class GPUSpotDetection {
         parameters.put("detect_maxima", 1);
         clij.execute(GPUSpotDetection.class, "kernels/detection.cl", "detect_local_optima_3d", parameters);
         clij.show(flop, "detected maxima");
+
+        System.out.println("Count: " + new GPUSum(clij, flop).sum());
 
         parameters.clear();
         parameters.put("src", flop);

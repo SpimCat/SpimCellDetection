@@ -87,7 +87,7 @@ public class GPUSpotDetection {
         Kernels.detectMaxima(clij, flip, flop, 3);
         //clij.show(flop, "detected maxima");
 
-        System.out.println("Count: " + new GPUSum(clij, flop).sum());
+        System.out.println("Count: " + Kernels.sumPixels(clij, flop));
 
         Kernels.dilate(clij, flop, flip);
         Kernels.dilate(clij, flip, flop);

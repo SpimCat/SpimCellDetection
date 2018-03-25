@@ -45,7 +45,7 @@ __kernel void addWeightedPixelwise(__read_only    image3d_t  src,
 
   const int4 pos = (int4){x,y,z,0};
 
-  const DTYPE_OUT value = READ_IMAGE(src, pos).x + READ_IMAGE(src1, pos).x;
+  const DTYPE_OUT value = READ_IMAGE(src, pos).x * factor + READ_IMAGE(src1, pos).x * factor1;
 
   WRITE_IMAGE (dst, pos, value);
 }

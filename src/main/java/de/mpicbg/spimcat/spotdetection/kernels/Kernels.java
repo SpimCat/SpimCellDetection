@@ -5,6 +5,10 @@ import clearcl.imagej.ClearCLIJ;
 import clearcl.imagej.demo.BenchmarkingDemo;
 import de.mpicbg.spimcat.spotdetection.GPUSpotDetection;
 import fastfuse.tasks.GaussianBlurTask;
+import net.imglib2.Cursor;
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -130,6 +134,9 @@ public class Kernels {
         return clij.execute(Kernels.class, "binaryProcessing.cl", "erode_6_neighborhood_3d", parameters);
     }
 
+    // invert
+    // invertBinary
+
     public static boolean mask(ClearCLIJ pCLIJ, ClearCLImage src, ClearCLImage mask, ClearCLImage dst) {
         HashMap<String, Object> lParameters = new HashMap<>();
         lParameters.put("src", src);
@@ -146,6 +153,25 @@ public class Kernels {
         lParameters.put("dst", pOutputImage);
         return pCLIJ.execute(Kernels.class, "math.cl", "multiplyPixelwise", lParameters);
     }
+
+    public static double sumPixels(ClearCLIJ clij, ClearCLImage clImage) {
+
+        ClearCLImage clReducedImage = clij.createCLImage(new long[]{clImage.getWidth(), clImage.getHeight()}, clImage.getChannelDataType());
+
+        HashMap<String, Object> parameters = new HashMap<>();
+        parameters.put("src", clImage);
+        parameters.put("dst", clReducedImage);
+        clij.execute(Kernels.class, "projections.cl", "sum_project_3d_2d", parameters);
+
+        RandomAccessibleInterval rai = clij.converter(clReducedImage).getRandomAccessibleInterval();
+        Cursor cursor = Views.iterable(rai).cursor();
+        float sum = 0;
+        while (cursor.hasNext()) {
+            sum += ((RealType)cursor.next()).getRealFloat();
+        }
+        return sum;
+    }
+
 
     public static boolean threshold(ClearCLIJ clij, ClearCLImage src, ClearCLImage dst, float threshold) {
         HashMap<String, Object> lParameters = new HashMap<>();

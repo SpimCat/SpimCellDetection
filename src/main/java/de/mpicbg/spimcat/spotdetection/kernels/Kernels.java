@@ -19,7 +19,6 @@ public class Kernels {
         return pCLIJ.execute(Kernels.class, "math.cl", "addPixelwise", lParameters);
     }
 
-
     public static boolean addScalar(ClearCLIJ pCLIJ, ClearCLImage src, ClearCLImage dst, float scalar) {
         HashMap<String, Object> lParameters = new HashMap<>();
         lParameters.put("src", src);

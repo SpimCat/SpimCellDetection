@@ -10,50 +10,94 @@ import de.mpicbg.spimcat.spotdetection.tools.GPUSum;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
+import ij.plugin.RGBStackMerge;
 
 import java.io.IOException;
 import java.util.HashMap;
 
 public class GPUSpotDetection {
+    private static float samplingFactorX = 0.5f;
+    private static float samplingFactorY = 0.5f;
+    private static float samplingFactorZ = 1;
+    private static float threshold = 400;
+
+    private static boolean cropPartForDebugging = true;
+
+    private static ClearCLIJ clij;
+    private static ImagePlus imp;
+
     public static void main (String... args) throws IOException {
-
-        float samplingFactorX = 0.5f;
-        float samplingFactorY = 0.5f;
-        float samplingFactorZ = 2;
-
         new ImageJ();
-        ClearCLIJ clij = new ClearCLIJ("HD");
+        clij = new ClearCLIJ("HD");
         ElapsedTime.sStandardOutput = true;
 
-        ImagePlus imp = IJ.openImage("C:\\structure\\data\\Uncalibrated.tif");
+        String file = "";
+        if (System.getProperty("os.name").startsWith("Windows")) {
+            file = "C:\\structure\\data\\Uncalibrated.tif";
+        } else {
+            file = "/home/rhaase/data/Uncalibrated.tif";
+        }
+
+        imp = IJ.openImage(file);
         imp.show();
 
-        ClearCLImage clInput = clij.converter(imp).getClearCLImage();
-        long[] targetDimensions = Arrays.elementwiseMultiplVectors(clInput.getDimensions(), new float[]{samplingFactorX, samplingFactorY, samplingFactorZ});
+        for (int i = 0; i < 10; i++) {
+            ElapsedTime.measure("the whole thing ", () -> {
+                exec();
+            });
+        }
+    }
+
+    private static void exec() {
+
+        ClearCLImage clImp = clij.converter(imp).getClearCLImage();
+        ClearCLImage clInput = clImp;
+        long[] targetDimensions;
+        if (cropPartForDebugging) {
+            targetDimensions = Arrays.elementwiseMultiplVectors(clImp.getDimensions(), new float[]{0.5f, 0.5f, 1});
+            clInput = clij.createCLImage(targetDimensions, clImp.getChannelDataType());
+            Kernels.crop(clij, clImp, clInput, 256, 0, 0);
+        }
+
+        targetDimensions = Arrays.elementwiseMultiplVectors(clInput.getDimensions(), new float[]{samplingFactorX, samplingFactorY, samplingFactorZ});
         ClearCLImage flip = clij.createCLImage(targetDimensions, clInput.getChannelDataType());
         ClearCLImage flop = clij.createCLImage(targetDimensions, clInput.getChannelDataType());
+        ClearCLImage flap = clij.createCLImage(targetDimensions, clInput.getChannelDataType());
 
-        HashMap<String, Object> parameters = new HashMap<>();
-        Kernels.downsample(clij, clInput, flop, 0.5f, 0.5f, 1f);
+        Kernels.downsample(clij, clInput, flop, samplingFactorX, samplingFactorY, samplingFactorZ);
         clij.show(flop, "downsampled");
+        ImagePlus downsampledImp = IJ.getImage();
 
-        parameters.clear();
-        Kernels.differenceOfGaussian(clij, flop, flip, 6, 1.5f, 3f);
-        clij.show(flip, "dog");
 
-        parameters.clear();
+        Kernels.blurSlicewise(clij, flop, flip, 6, 6, 3f, 3f);
+
+        Kernels.threshold(clij, flip, flap, threshold);
+
+        Kernels.addScalar(clij, flop, flip, -threshold);
+        Kernels.mask(clij, flip, flap, flop);
+
+        //clij.show(flop, "src_dog");
+
+
+
+        // Spot detection
+        Kernels.differenceOfGaussian(clij, flop, flip, 6, 1.1f, 5f);
+        //clij.show(flip, "dog");
+
         Kernels.detectMaxima(clij, flip, flop, 3);
-        clij.show(flop, "detected maxima");
+        //clij.show(flop, "detected maxima");
 
         System.out.println("Count: " + new GPUSum(clij, flop).sum());
 
         Kernels.dilate(clij, flop, flip);
         Kernels.dilate(clij, flip, flop);
-        Kernels.dilate(clij, flop, flip);
-        clij.show(flip, "3x dilated");
+        //Kernels.dilate(clij, flop, flip);
+        clij.show(flop, "2x dilated");
 
+        ImagePlus spotsImp = IJ.getImage();
 
-
+        ImagePlus merged = RGBStackMerge.mergeChannels(new ImagePlus[]{downsampledImp, spotsImp}, true);
+        merged.show();
 
         System.out.print("Bye");
     }

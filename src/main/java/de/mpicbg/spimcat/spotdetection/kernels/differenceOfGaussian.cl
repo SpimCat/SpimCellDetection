@@ -1,7 +1,7 @@
 
 __kernel void subtract_convolved_images_3d_fast(
-        __read_only image3d_t input,
-        __write_only image3d_t output,
+        __read_only image3d_t src,
+        __write_only image3d_t dst,
         __private int radius,
         __private float sigma_minuend,
         __private float sigma_subtrahend
@@ -24,7 +24,7 @@ __kernel void subtract_convolved_images_3d_fast(
             {
                 const int4 kernelPos = {x+radius, y+radius, z+radius, 0};
 
-                float image_pixel_value = READ_IMAGE(input, sampler, pos + (int4){ x, y, z, 0}).x;
+                float image_pixel_value = READ_IMAGE(src, sampler, pos + (int4){ x, y, z, 0}).x;
 
                 float weight_minuend = exp(-((float) (x * x + y * y) / (2.0f
                                                               * sigma_minuend
@@ -43,5 +43,5 @@ __kernel void subtract_convolved_images_3d_fast(
     }
 
     float pix = weighted_sum_minuend / sum_minuend  - weighted_sum_subtrahend / sum_subtrahend; //,0,0,0};
-	WRITE_IMAGE(output, pos, (DTYPE_OUT){pix, 0, 0, 0});
+	WRITE_IMAGE(dst, pos, (DTYPE_OUT){pix, 0, 0, 0});
 }

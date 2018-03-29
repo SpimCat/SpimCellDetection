@@ -6,7 +6,6 @@ import clearcl.imagej.demo.BenchmarkingDemo;
 import clearcl.util.ElapsedTime;
 import de.mpicbg.spimcat.spotdetection.kernels.Kernels;
 import de.mpicbg.spimcat.spotdetection.math.Arrays;
-import de.mpicbg.spimcat.spotdetection.tools.GPUSum;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;

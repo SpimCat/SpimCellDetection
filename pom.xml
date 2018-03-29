@@ -183,10 +183,12 @@
 		<repository>
 			<id>bintray-haesleinhuepf-snapshots</id>
 			<name>bintray-snapshots</name>
-			<url>https://api.bintray.com/maven/haesleinhuepf/snapshots/easyscopy/;publish=1</url>
+			<url>https://api.bintray.com/maven/haesleinhuepf/snapshots/spimcelldetection/;publish=1</url>
 		</repository>
 
 	</distributionManagement>
+
+
 
 
 </project>

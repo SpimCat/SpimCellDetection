@@ -2,9 +2,8 @@ package de.mpicbg.spimcat.spotdetection;
 
 import clearcl.ClearCLImage;
 import clearcl.imagej.ClearCLIJ;
-import clearcl.imagej.demo.BenchmarkingDemo;
 import clearcl.util.ElapsedTime;
-import de.mpicbg.spimcat.spotdetection.kernels.Kernels;
+import clearcl.imagej.kernels.Kernels;
 import de.mpicbg.spimcat.spotdetection.math.Arrays;
 import ij.IJ;
 import ij.ImageJ;
@@ -12,7 +11,6 @@ import ij.ImagePlus;
 import ij.plugin.RGBStackMerge;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 public class GPUSpotDetection {
     private static float samplingFactorX = 0.5f;

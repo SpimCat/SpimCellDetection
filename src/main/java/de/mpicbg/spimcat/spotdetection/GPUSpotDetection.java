@@ -16,15 +16,24 @@ public class GPUSpotDetection {
     private float samplingFactorX = 0.5f;
     private float samplingFactorY = 0.5f;
     private float samplingFactorZ = 1;
-    private static float threshold = 400;
 
-    private static boolean cropPartForDebugging = true;
+    private float threshold = 400;
+    private float dogSigmaMinuend = 1.5f;
+    private float dogSigmaSubtrahend = 1.5f;
+    private int dogRadius = 3;
+    private float blurSigma = 3f;
+    private int blurRadius = 6;
+
+    private int optimaDetectionRadius = 3;
+
+    private boolean showIntermediateResults = true;
 
     private ClearCLIJ clij;
-    //private static ImagePlus imp;
 
     private ClearCLImage input;
     private ClearCLImage output;
+
+
 
     public GPUSpotDetection(ClearCLIJ clij, ClearCLImage input, ClearCLImage output, float threshold) {
       this.clij = clij;
@@ -35,66 +44,132 @@ public class GPUSpotDetection {
       samplingFactorX = (float)output.getWidth() / input.getWidth();
       samplingFactorY = (float)output.getHeight() / input.getHeight();
       samplingFactorZ = (float)output.getDepth() / input.getDepth();
-
-
     }
 
-    public void exec() {
+    public void exec()
+    {
 
-        //ClearCLImage clImp = clij.converter(imp).getClearCLImage();
-        //ClearCLImage input = clImp;
-        long[] targetDimensions = new long[]{output.getWidth(), output.getHeight(), output.getDepth()};
-        /*if (cropPartForDebugging) {
-            targetDimensions = Arrays.elementwiseMultiplVectors(clImp.getDimensions(), new float[]{0.5f, 0.5f, 1});
-            clInput = clij.createCLImage(targetDimensions, clImp.getChannelDataType());
-            Kernels.crop(clij, clImp, clInput, 256, 0, 0);
-        }*/
+      // memory allocation
+      long[]
+          targetDimensions =
+          new long[] { output.getWidth(),
+                       output.getHeight(),
+                       output.getDepth() };
+      ClearCLImage flip = clij.createCLImage(targetDimensions, input.getChannelDataType());
+      ClearCLImage flop = output; //clij.createCLImage(targetDimensions, clInput.getChannelDataType());
+      ClearCLImage flap = clij.createCLImage(targetDimensions, input.getChannelDataType());
+      ImagePlus downsampledImp = null;
+      ImagePlus dogImp = null;
 
-        //targetDimensions = Arrays.elementwiseMultiplVectors(clInput.getDimensions(), new float[]{samplingFactorX, samplingFactorY, samplingFactorZ});
-        ClearCLImage flip = clij.createCLImage(targetDimensions, input.getChannelDataType());
-        ClearCLImage flop = output; //clij.createCLImage(targetDimensions, clInput.getChannelDataType());
-        ClearCLImage flap = clij.createCLImage(targetDimensions, input.getChannelDataType());
-
-        System.out.println("factors " + samplingFactorX + "/" + samplingFactorY + "/" + samplingFactorZ);
-        Kernels.downsample(clij, input, flop, samplingFactorX, samplingFactorY, samplingFactorZ);
+      // downsampling
+      System.out.println("factors "
+                         + samplingFactorX
+                         + "/"
+                         + samplingFactorY
+                         + "/"
+                         + samplingFactorZ);
+      Kernels.downsample(clij,
+                         input,
+                         flop,
+                         samplingFactorX,
+                         samplingFactorY,
+                         samplingFactorZ);
+      if (showIntermediateResults)
+      {
         clij.show(flop, "downsampled");
+        downsampledImp = IJ.getImage();
+      }
 
-        ImagePlus downsampledImp = IJ.getImage();
+      // blur
+      Kernels.blurSlicewise(clij,
+                            flop,
+                            flip,
+                            blurRadius,
+                            blurRadius,
+                            blurSigma,
+                            blurSigma);
 
+      // threshold
+      Kernels.threshold(clij, flip, flap, threshold);
+      Kernels.addScalar(clij, flop, flip, -threshold);
 
-        Kernels.blurSlicewise(clij, flop, flip, 6, 6, 3f, 3f);
+      // mask downsampled image
+      Kernels.mask(clij, flip, flap, flop);
 
-        Kernels.threshold(clij, flip, flap, threshold);
-
-        Kernels.addScalar(clij, flop, flip, -threshold);
-        Kernels.mask(clij, flip, flap, flop);
-
-        //clij.show(flop, "src_dog");
-
-
-
-        // Spot detection
-        Kernels.differenceOfGaussian(clij, flop, flip, 6, 1.5f, 3f);
+      // Spot detection
+      Kernels.differenceOfGaussian(clij,
+                                   flop,
+                                   flip,
+                                   dogRadius,
+                                   dogSigmaMinuend,
+                                   dogSigmaSubtrahend);
+      if (showIntermediateResults)
+      {
         clij.show(flip, "dog");
-        ImagePlus dogImp = IJ.getImage();
+        dogImp = IJ.getImage();
+      }
+      Kernels.detectMaxima(clij, flip, flop, optimaDetectionRadius);
 
-        Kernels.detectMaxima(clij, flip, flop, 3);
-        //clij.show(flop, "detected maxima");
+      System.out.println("Spot count: " + Kernels.sumPixels(clij, flop));
 
-        System.out.println("Count: " + Kernels.sumPixels(clij, flop));
+      // result visualisation
+      Kernels.dilate(clij, flop, flip);
+      Kernels.dilate(clij, flip, flop);
 
-        Kernels.dilate(clij, flop, flip);
-        Kernels.dilate(clij, flip, flop);
-        //Kernels.dilate(clij, flop, flip);
+      if (showIntermediateResults)
+      {
         clij.show(flop, "2x dilated");
 
         ImagePlus spotsImp = IJ.getImage();
-
-        ImagePlus merged = RGBStackMerge.mergeChannels(new ImagePlus[]{downsampledImp, spotsImp, dogImp}, true);
+        ImagePlus
+            merged =
+            RGBStackMerge.mergeChannels(new ImagePlus[] { downsampledImp,
+                                                          spotsImp,
+                                                          dogImp }, true);
         merged.show();
-
-        flip.close();
-        flap.close();
-        System.out.print("Bye");
+      }
+      flip.close();
+      flap.close();
+      System.out.print("Bye");
     }
+
+  public void setThreshold(float threshold)
+  {
+    this.threshold = threshold;
+  }
+
+  public void setDogSigmaMinuend(float dogSigmaMinuend)
+  {
+    this.dogSigmaMinuend = dogSigmaMinuend;
+  }
+
+  public void setDogSigmaSubtrahend(float dogSigmaSubtrahend)
+  {
+    this.dogSigmaSubtrahend = dogSigmaSubtrahend;
+  }
+
+  public void setDogRadius(int dogRadius)
+  {
+    this.dogRadius = dogRadius;
+  }
+
+  public void setBlurSigma(float blurSigma)
+  {
+    this.blurSigma = blurSigma;
+  }
+
+  public void setBlurRadius(int blurRadius)
+  {
+    this.blurRadius = blurRadius;
+  }
+
+  public void setOptimaDetectionRadius(int optimaDetectionRadius)
+  {
+    this.optimaDetectionRadius = optimaDetectionRadius;
+  }
+
+  public void setShowIntermediateResults(boolean showIntermediateResults)
+  {
+    this.showIntermediateResults = showIntermediateResults;
+  }
 }

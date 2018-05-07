@@ -2,6 +2,7 @@ package de.mpicbg.spimcat.spotdetection.demo;
 
 import clearcl.ClearCLImage;
 import clearcl.imagej.ClearCLIJ;
+import clearcl.imagej.kernels.Kernels;
 import clearcl.util.ElapsedTime;
 import de.mpicbg.spimcat.spotdetection.GPUSpotDetection;
 import ij.IJ;
@@ -27,7 +28,7 @@ public class GPUSpotDetectionDemo
 
     String file = "";
     if (System.getProperty("os.name").startsWith("Windows")) {
-      file = "C:\\structure\\data\\Uncalibrated.tif";
+      file = "C:\\structure\\data\\cells.tif";
     } else {
       file = "/home/rhaase/data/Uncalibrated.tif";
     }
@@ -35,13 +36,21 @@ public class GPUSpotDetectionDemo
     ImagePlus imp = IJ.openImage(file);
     imp.show();
 
-    //for (int i = 0; i < 10; i++) {
+    //for (int i = 0; i < 1000; i++) {
       ElapsedTime.measure("the whole thing ", () -> {
 
         ClearCLImage input = clij.converter(imp).getClearCLImage();
         ClearCLImage output = clij.createCLImage(new long[]{input.getWidth()/2, input.getHeight()/2, input.getDepth()}, input.getChannelDataType());
 
-        new GPUSpotDetection(clij, input, output, threshold).exec();
+        GPUSpotDetection gsd = new GPUSpotDetection(clij, input, output, threshold);
+        gsd.setShowIntermediateResults(true);
+        gsd.exec();
+
+        System.out.println("spots: " + Kernels.sumPixels(clij, output));
+
+        input.close();
+        output.close();
+
       });
     //}
   }

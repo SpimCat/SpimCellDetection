@@ -18,11 +18,11 @@ public class GPUSpotDetection {
     private float samplingFactorZ = 1;
 
     private float threshold = 400;
-    private float dogSigmaMinuend = 1.5f;
-    private float dogSigmaSubtrahend = 1.5f;
+    private float dogSigmaMinuend = 3f;
+    private float dogSigmaSubtrahend = 6f;
     private int dogRadius = 3;
-    private float blurSigma = 3f;
-    private int blurRadius = 6;
+    private float blurSigma = 6f;
+    private int blurRadius = 12;
 
     private int optimaDetectionRadius = 3;
 
@@ -113,12 +113,12 @@ public class GPUSpotDetection {
       System.out.println("Spot count: " + Kernels.sumPixels(clij, flop));
 
       // result visualisation
-      Kernels.dilate(clij, flop, flip);
-      Kernels.dilate(clij, flip, flop);
-
       if (showIntermediateResults)
       {
-        clij.show(flop, "2x dilated");
+          Kernels.dilate(clij, flop, flip);
+          Kernels.dilate(clij, flip, flap);
+
+          clij.show(flap, "2x dilated");
 
         ImagePlus spotsImp = IJ.getImage();
         ImagePlus

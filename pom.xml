@@ -14,7 +14,7 @@
 
 	<groupId>de.mpicbg.spimcat</groupId>
 	<artifactId>spimcelldetection</artifactId>
-	<version>0.1.4</version>
+	<version>0.1.5</version>
 
 	<name>spimcelldetection</name>
 	<description>spimcelldetection</description>
@@ -112,7 +112,7 @@
 		<dependency>
 			<groupId>net.clearcontrol</groupId>
 			<artifactId>clearclij</artifactId>
-			<version>0.2.5</version>
+			<version>0.3.1</version>
 		</dependency>
 		<dependency>
 			<groupId>de.mpicbg.rhaase</groupId>
@@ -158,6 +158,11 @@
 			<groupId>org.atteo.classindex</groupId>
 			<artifactId>classindex</artifactId>
 			<version>3.4</version>
+		</dependency>
+		<dependency>
+			<groupId>graphics.scenery</groupId>
+			<artifactId>scenery</artifactId>
+			<version>0.4.2</version>
 		</dependency>
 	</dependencies>
 

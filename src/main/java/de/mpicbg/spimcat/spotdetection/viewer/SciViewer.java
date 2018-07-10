@@ -1,9 +1,5 @@
 package de.mpicbg.spimcat.spotdetection.viewer;
 
-import cleargl.GLVector;
-import graphics.scenery.*;
-import graphics.scenery.backends.Renderer;
-import org.junit.Test;
 
 /**
  * SciViewer
@@ -14,7 +10,7 @@ import org.junit.Test;
  * 06 2018
  */
 class SciViewer {
-
+/*
     public static void main(String... args) throws Exception {
         System.out.println("hello world");
         //new SciViewer().testExample();
@@ -76,5 +72,5 @@ class SciViewer {
             rotator.start();
         }
     }
-
+*/
 }

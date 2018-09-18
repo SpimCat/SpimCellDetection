@@ -14,7 +14,7 @@
 
 	<groupId>de.mpicbg.spimcat</groupId>
 	<artifactId>spimcelldetection</artifactId>
-	<version>0.1.6</version>
+	<version>0.1.7</version>
 
 	<name>spimcelldetection</name>
 	<description>spimcelldetection</description>
@@ -112,7 +112,7 @@
 		<dependency>
 			<groupId>net.clearcontrol</groupId>
 			<artifactId>clearclij</artifactId>
-			<version>0.3.1</version>
+			<version>0.3.16</version>
 		</dependency>
 		<dependency>
 			<groupId>de.mpicbg.rhaase</groupId>
@@ -123,11 +123,6 @@
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
 			<version>3.7</version>
-		</dependency>
-		<dependency>
-			<groupId>net.clearvolume</groupId>
-			<artifactId>clearcl</artifactId>
-			<version>0.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.scijava</groupId>

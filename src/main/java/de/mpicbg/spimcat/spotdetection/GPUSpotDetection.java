@@ -13,25 +13,26 @@ import ij.plugin.RGBStackMerge;
 import java.io.IOException;
 
 public class GPUSpotDetection {
-    private float samplingFactorX = 0.5f;
-    private float samplingFactorY = 0.5f;
-    private float samplingFactorZ = 1;
+    protected float samplingFactorX = 0.5f;
+    protected float samplingFactorY = 0.5f;
+    protected float samplingFactorZ = 1;
 
-    private float threshold = 400;
-    private float dogSigmaMinuend = 3f;
-    private float dogSigmaSubtrahend = 6f;
-    private int dogRadius = 3;
-    private float blurSigma = 6f;
-    private int blurRadius = 12;
+    protected float threshold = 400;
+    protected float relativeThreshold = 1;
+    protected float dogSigmaMinuend = 3f;
+    protected float dogSigmaSubtrahend = 6f;
+    protected int dogRadius = 3;
+    protected float blurSigma = 6f;
+    protected int blurRadius = 12;
 
-    private int optimaDetectionRadius = 3;
+    protected int optimaDetectionRadius = 3;
 
-    private boolean showIntermediateResults = true;
+    protected boolean showIntermediateResults = true;
 
-    private ClearCLIJ clij;
+    protected ClearCLIJ clij;
 
-    private ClearCLImage input;
-    private ClearCLImage output;
+    protected ClearCLImage input;
+    protected ClearCLImage output;
 
 
 
@@ -108,6 +109,14 @@ public class GPUSpotDetection {
         clij.show(flip, "dog");
         dogImp = IJ.getImage();
       }
+
+      // remove pixels below relative threshold (e.g. negative pixels after DoG)
+      Kernels.threshold(clij, flip, flap, relativeThreshold);
+      Kernels.mask(clij, flip, flap, flop);
+      Kernels.copy(clij, flop, flip);
+
+
+
       Kernels.detectMaxima(clij, flip, flop, optimaDetectionRadius);
 
       System.out.println("Spot count: " + Kernels.sumPixels(clij, flop));

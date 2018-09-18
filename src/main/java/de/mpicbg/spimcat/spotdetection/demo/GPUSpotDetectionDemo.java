@@ -5,6 +5,7 @@ import clearcl.imagej.ClearCLIJ;
 import clearcl.imagej.kernels.Kernels;
 import clearcl.util.ElapsedTime;
 import de.mpicbg.spimcat.spotdetection.GPUSpotDetection;
+import de.mpicbg.spimcat.spotdetection.GPUSpotDetectionSliceBySlice;
 import ij.IJ;
 import ij.ImageJ;
 import ij.ImagePlus;
@@ -35,6 +36,7 @@ public class GPUSpotDetectionDemo
 
     ImagePlus imp = IJ.openImage(file);
     imp.show();
+    IJ.run(imp, "32-bit", "");
 
     //for (int i = 0; i < 1000; i++) {
       ElapsedTime.measure("the whole thing ", () -> {
@@ -42,9 +44,13 @@ public class GPUSpotDetectionDemo
         ClearCLImage input = clij.converter(imp).getClearCLImage();
         ClearCLImage output = clij.createCLImage(new long[]{input.getWidth()/2, input.getHeight()/2, input.getDepth()}, input.getChannelDataType());
 
-        GPUSpotDetection gsd = new GPUSpotDetection(clij, input, output, threshold);
+        GPUSpotDetection gsd = new GPUSpotDetectionSliceBySlice(clij, input, output, threshold);
         gsd.setShowIntermediateResults(true);
         gsd.exec();
+
+        System.out.println("out w " + output.getWidth() );
+        System.out.println("out h " + output.getHeight() );
+        System.out.println("out d " + output.getDepth() );
 
         System.out.println("spots: " + Kernels.sumPixels(clij, output));
 
